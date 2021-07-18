@@ -1,3 +1,3 @@
 # My-Observable
 
-My implementaion to the observable idea
+My implementaion of the observable idea
