@@ -5,7 +5,7 @@ type TSubscriber = <T>(arg: T) => void;
 
 class Observable<T> {
   subscribers: TSubscriber[] = [];
-  value;
+  private value;
 
   constructor(initialValue: T) {
     this.value = initialValue;
