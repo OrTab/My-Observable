@@ -1,7 +1,5 @@
 # My-Observable
 
-My implementaion of the observable idea 
-One implementaion with pure js
-Another implementaion written in typeScript includes interfaces 
+One of my implementation of the observer pattern (TS , JS).
 
-* I used generator function as solution for unique id
+more implementations coming soon

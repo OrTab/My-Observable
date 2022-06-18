@@ -1,85 +1,65 @@
-// @ts-nocheck
-interface Subscribe {
-    id: Number,
-    subscribeFunc: Function
+interface ISubscription {
+  unsubscribe: () => void;
+}
+type TSubscriber = <T>(arg: T) => void;
+
+class Observable<T> {
+  subscribers: TSubscriber[] = [];
+  value;
+
+  constructor(initialValue: T) {
+    this.value = initialValue;
+  }
+
+  getValue(): T {
+    return this.value;
+  }
+
+  next<T>(newValue: T) {
+    this.value = newValue;
+    this.executeFuncs();
+  }
+
+  subscribe(
+    subscribeFunc: TSubscriber,
+    shouldExecuteFunc: Boolean = true
+  ): ISubscription {
+    if (typeof subscribeFunc !== "function") {
+      throw new Error("subscribe must get a function");
+    }
+    this.subscribers.push(subscribeFunc);
+    shouldExecuteFunc && subscribeFunc(this.value);
+    return {
+      unsubscribe: () => {
+        this.subscribers = this.subscribers.filter(
+          (sub) => sub === subscribeFunc
+        );
+      },
+    };
+  }
+
+  private executeFuncs() {
+    this.subscribers.forEach((func) => func(this.value));
+  }
 }
 
-interface Subscription {
-    id: Number,
-    unsubscribe: Function
-}
+const num$ = new Observable(2);
 
-class Observable {
+const subscription1 = num$.subscribe((num) => {
+  console.log("the value is :", num);
+});
 
-    subscribes: Array<Subscribe> = []
-    value: any
-    private idGenerator: Generator
+const subscription2 = num$.subscribe((num) => {
+  console.log("Second subscribe -", "the value is :", num);
+});
 
-    constructor(initialValue: any) {
-        this.idGenerator = generateId()
-        this.value = initialValue
-    }
+const str$ = new Observable("World");
+const subOfStr = str$.subscribe((str) => {
+  console.log("Hello " + str + "!");
+});
 
-    getValue(): any {
-        return this.value
-    }
+subscription2.unsubscribe();
 
-    next(newVal: any) {
-        this.value = newVal
-        this.executeFuncs()
-    }
+num$.next([3, 5]);
 
-    subscribe(subscribeFunc: Function, isExecuteFunc: Boolean = true): Subscription {
-        if (typeof subscribeFunc !== 'function') {
-            console.error('subscribe must get a function')
-            return
-        }
-        const id = this.idGenerator.next().value
-        this.subscribes.push({ id, subscribeFunc })
-        isExecuteFunc && subscribeFunc(this.value)
-        return {
-            id,
-            unsubscribe: () => {
-                this.subscribes = this.subscribes.filter(sub => sub.id !== id)
-            }
-        }
-    }
-
-   private executeFuncs() {
-        this.subscribes.forEach(({ subscribeFunc }) => subscribeFunc(this.value))
-    }
-}
-
-const num$ = new Observable(2)
-
-const subOfNum = num$.subscribe(num => {
-    console.log('the value is :', num);
-})
-
-const sub2OfNum = num$.subscribe(num => {
-    console.log('Second subscribe -', 'the value is :', num);
-})
-
-const str$ = new Observable('World')
-const subOfStr = str$.subscribe(str => {
-    console.log('Hello ' + str + '!')
-})
-
-sub2OfNum.unsubscribe()
-
-num$.next([3, 5])
-
-str$.next('There')
-
-
-function* generateId() {
-    let id = 1
-    while (true) {
-        yield id++
-    }
-
-}
-
-
-
-
+str$.next("There");
