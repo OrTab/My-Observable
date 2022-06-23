@@ -1,11 +1,11 @@
 interface ISubscription {
   unsubscribe: () => void;
 }
-type TSubscriber = <T>(arg: T) => void;
+type Observer<T> = (arg: T) => void;
 
 class Observable<T> {
-  subscribers: TSubscriber[] = [];
-  private value;
+  observers: Observer<T>[] = [];
+  private value: T;
 
   constructor(initialValue: T) {
     this.value = initialValue;
@@ -15,31 +15,29 @@ class Observable<T> {
     return this.value;
   }
 
-  next<T>(newValue: T) {
+  next(newValue: T) {
     this.value = newValue;
     this.executeFuncs();
   }
 
   subscribe(
-    subscribeFunc: TSubscriber,
+    observer: Observer<T>,
     shouldExecuteFunc: Boolean = true
   ): ISubscription {
-    if (typeof subscribeFunc !== "function") {
+    if (typeof observer !== "function") {
       throw new Error("subscribe must get a function");
     }
-    this.subscribers.push(subscribeFunc);
-    shouldExecuteFunc && subscribeFunc(this.value);
+    this.observers.push(observer);
+    shouldExecuteFunc && observer(this.value);
     return {
       unsubscribe: () => {
-        this.subscribers = this.subscribers.filter(
-          (sub) => sub === subscribeFunc
-        );
+        this.observers = this.observers.filter((sub) => sub === observer);
       },
     };
   }
 
   private executeFuncs() {
-    this.subscribers.forEach((func) => func(this.value));
+    this.observers.forEach((func) => func(this.value));
   }
 }
 
@@ -60,6 +58,6 @@ const subOfStr = str$.subscribe((str) => {
 
 subscription2.unsubscribe();
 
-num$.next([3, 5]);
+num$.next(12);
 
 str$.next("There");
