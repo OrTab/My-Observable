@@ -1,10 +1,13 @@
+type Priority = 1 | 2 | 3 | 4 | 5;
+
 type Subscription = {
   unsubscribe: () => void;
+  updatePrioritization: (priority: Priority) => void;
 };
 type Observer<T> = (arg: T) => void;
 
 type ObserverOptions = {
-  priority: 1 | 2 | 3 | 4 | 5;
+  priority: Priority;
 };
 
 class Observable<T> {
@@ -35,12 +38,19 @@ class Observable<T> {
     this.subscribers[priority] ||= [];
     this.subscribers[priority]!.push(subscriber);
     subscriber(this.value);
+
+    const unsubscribe = () => {
+      this.subscribers[priority] = this.subscribers[priority]!.filter(
+        (fn) => fn !== subscriber
+      );
+    };
+    const updatePrioritization = (priority: Priority) => {
+      unsubscribe();
+      this.subscribers[priority]!.push(subscriber);
+    };
     return {
-      unsubscribe: () => {
-        this.subscribers[priority] = this.subscribers[priority]!.filter(
-          (fn) => fn !== subscriber
-        );
-      },
+      unsubscribe,
+      updatePrioritization,
     };
   }
 
@@ -77,4 +87,8 @@ const subOfStr = str$.subscribe((str) => {
 
 num$.next(12);
 
+subscription1.updatePrioritization(5);
+subscription2.updatePrioritization(3);
+
+num$.next(7);
 str$.next("There");
