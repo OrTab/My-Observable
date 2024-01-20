@@ -1,6 +1,6 @@
-interface ISubscription {
+type Subscription = {
   unsubscribe: () => void;
-}
+};
 type Observer<T> = (arg: T) => void;
 
 class Observable<T> {
@@ -17,27 +17,24 @@ class Observable<T> {
 
   next(newValue: T) {
     this.value = newValue;
-    this.executeFuncs();
+    this.notifyObservers();
   }
 
-  subscribe(
-    observer: Observer<T>,
-    shouldExecuteFunc: Boolean = true
-  ): ISubscription {
-    if (typeof observer !== "function") {
-      throw new Error("subscribe must get a function");
+  subscribe(subscriber: Observer<T>): Subscription {
+    if (typeof subscriber !== "function") {
+      throw new Error("subscriber must get a function");
     }
-    this.observers.push(observer);
-    shouldExecuteFunc && observer(this.value);
+    this.observers.push(subscriber);
+    subscriber(this.value);
     return {
       unsubscribe: () => {
-        this.observers = this.observers.filter((sub) => sub === observer);
+        this.observers = this.observers.filter((fn) => fn === subscriber);
       },
     };
   }
 
-  private executeFuncs() {
-    this.observers.forEach((func) => func(this.value));
+  private notifyObservers() {
+    this.observers.forEach((fn) => fn(this.value));
   }
 }
 
