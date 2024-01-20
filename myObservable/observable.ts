@@ -3,8 +3,12 @@ type Subscription = {
 };
 type Observer<T> = (arg: T) => void;
 
+type ObserverOptions = {
+  priority: 1 | 2 | 3 | 4 | 5;
+};
+
 class Observable<T> {
-  observers: Observer<T>[] = [];
+  subscribers: Partial<Record<ObserverOptions["priority"], Observer<T>[]>> = {};
   private value: T;
 
   constructor(initialValue: T) {
@@ -20,40 +24,56 @@ class Observable<T> {
     this.notifyObservers();
   }
 
-  subscribe(subscriber: Observer<T>): Subscription {
+  subscribe(
+    subscriber: Observer<T>,
+    options: ObserverOptions = { priority: 5 }
+  ): Subscription {
     if (typeof subscriber !== "function") {
       throw new Error("subscriber must get a function");
     }
-    this.observers.push(subscriber);
+    const { priority } = options;
+    this.subscribers[priority] ||= [];
+    this.subscribers[priority]!.push(subscriber);
     subscriber(this.value);
     return {
       unsubscribe: () => {
-        this.observers = this.observers.filter((fn) => fn === subscriber);
+        this.subscribers[priority] = this.subscribers[priority]!.filter(
+          (fn) => fn !== subscriber
+        );
       },
     };
   }
 
   private notifyObservers() {
-    this.observers.forEach((fn) => fn(this.value));
+    const priorities = Object.keys(this.subscribers).sort((a, b) =>
+      a > b ? -1 : 1
+    );
+    priorities.forEach((priority) => {
+      this.subscribers[priority].forEach((fn) => fn(this.value));
+    });
   }
 }
 
 const num$ = new Observable(2);
 
-const subscription1 = num$.subscribe((num) => {
-  console.log("the value is :", num);
-});
+const subscription1 = num$.subscribe(
+  (num) => {
+    console.log("the value is :", num);
+  },
+  { priority: 3 }
+);
 
-const subscription2 = num$.subscribe((num) => {
-  console.log("Second subscribe -", "the value is :", num);
-});
+const subscription2 = num$.subscribe(
+  (num) => {
+    console.log("Second subscribe -", "the value is :", num);
+  },
+  { priority: 5 }
+);
 
 const str$ = new Observable("World");
 const subOfStr = str$.subscribe((str) => {
   console.log("Hello " + str + "!");
 });
-
-subscription2.unsubscribe();
 
 num$.next(12);
 
