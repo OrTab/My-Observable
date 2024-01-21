@@ -4,9 +4,9 @@ const observablePort = 5000;
 
 const clients: Socket[] = [];
 
-const observableServer = net.createServer((socket) => {
+const observableServer = net.createServer((client) => {
   console.log("New client!");
-  clients.push(socket);
+  clients.push(client);
 });
 
 const observerClient1 = net.createConnection(
